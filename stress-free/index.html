@@ -330,6 +330,28 @@
     border-color: var(--cyan);
   }
 
+  .skku-badge {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    z-index: 15;
+    background: var(--charcoal);
+    color: var(--gold);
+    border: 1px solid rgba(255, 192, 0, 0.5);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-decoration: none;
+    padding: 8px 12px;
+    transition: background-color var(--t) var(--ease), color var(--t) var(--ease);
+  }
+
+  .skku-badge:hover {
+    background: var(--gold);
+    color: var(--black);
+  }
+
   .stage-shake {
     animation: shake 0.32s var(--ease);
   }
@@ -596,6 +618,14 @@
     <button class="mute-btn" id="muteBtn" type="button">🔊 소리 켜짐</button>
   </footer>
 
+  <a
+    class="skku-badge"
+    id="skkuBadge"
+    href="https://www.skku.edu/skku/index.do"
+    target="_blank"
+    rel="noopener noreferrer"
+  >SKKU 바로가기 ↗</a>
+
   <div class="toast" id="toast"></div>
   <div class="confetti-layer" id="confettiLayer"></div>
 
@@ -673,6 +703,7 @@
     const stageEl = document.getElementById("stage");
     const bigButtonEl = document.getElementById("bigButton");
     const muteBtnEl = document.getElementById("muteBtn");
+    const skkuBadgeEl = document.getElementById("skkuBadge");
     const scopeNoteEl = document.getElementById("scopeNote");
     const toastEl = document.getElementById("toast");
     const confettiLayerEl = document.getElementById("confettiLayer");
@@ -1019,6 +1050,9 @@
 
     bigButtonEl.addEventListener("click", handleClick);
     muteBtnEl.addEventListener("click", toggleMute);
+    skkuBadgeEl.addEventListener("click", () => {
+      gtag("event", "skku_link_click", { link_url: "https://www.skku.edu/skku/index.do" });
+    });
 
     document.querySelectorAll(".info-trigger").forEach((btn) => {
       btn.addEventListener("click", () => openInfoPanel(btn.dataset.target));
