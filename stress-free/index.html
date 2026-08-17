@@ -313,24 +313,6 @@
     border-color: var(--cyan);
   }
 
-  .reset-btn {
-    background: var(--steel);
-    color: var(--charcoal);
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-    text-transform: uppercase;
-    padding: 14px 28px;
-    transition: background-color var(--t) var(--ease);
-  }
-
-  .reset-btn:hover {
-    background: var(--white);
-  }
-
   .stage-shake {
     animation: shake 0.32s var(--ease);
   }
@@ -591,13 +573,12 @@
         <button class="big-button" id="bigButton" type="button">Click</button>
       </div>
 
-      <p class="scope-note">지금은 이 브라우저 기준 카운트예요. 전체 사용자 합산은 배포 후 서버 저장소(Supabase) 연동이 필요해요.</p>
+      <p class="scope-note" id="scopeNote">오늘 모두가 함께 누른 클릭이에요. Supabase에 실시간으로 합산돼요.</p>
     </section>
   </main>
 
   <footer class="bottom-bar">
     <button class="mute-btn" id="muteBtn" type="button">🔊 소리 켜짐</button>
-    <button class="reset-btn" id="resetLink" type="button">오늘 카운트 초기화 (테스트용)</button>
   </footer>
 
   <div class="toast" id="toast"></div>
@@ -642,10 +623,18 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // ── Supabase 설정: 대시보드 > 프로젝트 > Settings > API 에서 확인 후 채우기 ──
+    const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_PUBLIC_KEY";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const VISITOR_ID_KEY = "clickChallengeVisitorId";
     const STORAGE_KEY = "clickChallengeState";
     const GOAL = 1000000;
     const MILESTONES = [25, 50, 75, 100];
+    const DEFAULT_SCOPE_NOTE = "오늘 모두가 함께 누른 클릭이에요. Supabase에 실시간으로 합산돼요.";
 
     const counterNumberEl = document.getElementById("counterNumber");
     const progressFillEl = document.getElementById("progressFill");
@@ -653,7 +642,7 @@
     const stageEl = document.getElementById("stage");
     const bigButtonEl = document.getElementById("bigButton");
     const muteBtnEl = document.getElementById("muteBtn");
-    const resetLinkEl = document.getElementById("resetLink");
+    const scopeNoteEl = document.getElementById("scopeNote");
     const toastEl = document.getElementById("toast");
     const confettiLayerEl = document.getElementById("confettiLayer");
     const infoOverlayEl = document.getElementById("infoOverlay");
@@ -686,7 +675,20 @@
       return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     }
 
-    function loadState() {
+    function getVisitorId() {
+      let id = localStorage.getItem(VISITOR_ID_KEY);
+      if (!id) {
+        id = window.crypto && window.crypto.randomUUID
+          ? window.crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        localStorage.setItem(VISITOR_ID_KEY, id);
+      }
+      return id;
+    }
+
+    const visitorId = getVisitorId();
+
+    function loadPrefs() {
       let raw = null;
       try {
         raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -696,21 +698,28 @@
 
       const today = todayKey();
       if (!raw || raw.date !== today) {
-        return { date: today, count: 0, milestonesShown: [], muted: raw ? !!raw.muted : false };
+        return { date: today, milestonesShown: [], muted: raw ? !!raw.muted : false };
       }
       return {
         date: raw.date,
-        count: raw.count || 0,
         milestonesShown: raw.milestonesShown || [],
         muted: !!raw.muted,
       };
     }
 
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    function savePrefs() {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ date: state.date, milestonesShown: state.milestonesShown, muted: state.muted })
+      );
     }
 
-    let state = loadState();
+    let state = loadPrefs();
+    state.count = 0;
+
+    function setScopeNote(message) {
+      scopeNoteEl.textContent = message;
+    }
 
     function formatNumber(n) {
       return n.toLocaleString("ko-KR");
@@ -901,6 +910,35 @@
       });
     }
 
+    async function fetchTodayTotal() {
+      const { data, error } = await supabaseClient.rpc("get_today_total");
+      if (error) {
+        console.error("[Supabase] 전체 카운트 조회 실패:", error.message);
+        setScopeNote("실시간 합산 카운트를 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+      setScopeNote(DEFAULT_SCOPE_NOTE);
+      const total = data || 0;
+      if (total !== state.count) {
+        state.count = total;
+        render();
+        checkMilestones();
+      }
+    }
+
+    async function recordClick() {
+      const { data, error } = await supabaseClient.rpc("record_click", { p_visitor_id: visitorId });
+      if (error) {
+        console.error("[Supabase] 클릭 반영 실패:", error.message);
+        setScopeNote("클릭이 서버에 저장되지 못했어요. 연결을 확인해주세요.");
+        return;
+      }
+      setScopeNote(DEFAULT_SCOPE_NOTE);
+      state.count = data;
+      render();
+      checkMilestones();
+    }
+
     function handleClick(event) {
       const rect = bigButtonEl.getBoundingClientRect();
       const originX = rect.left + rect.width / 2;
@@ -914,29 +952,24 @@
       triggerVibration(15);
 
       state.count += 1;
-      saveState();
       render();
       checkMilestones();
+      recordClick();
     }
 
     function toggleMute() {
       state.muted = !state.muted;
-      saveState();
+      savePrefs();
       renderMuteButton();
-    }
-
-    function resetToday() {
-      state = { date: todayKey(), count: 0, milestonesShown: [], muted: state.muted };
-      saveState();
-      render();
     }
 
     function checkMidnightReset() {
       const today = todayKey();
       if (state.date !== today) {
-        state = { date: today, count: 0, milestonesShown: [], muted: state.muted };
-        saveState();
-        render();
+        state.date = today;
+        state.milestonesShown = [];
+        savePrefs();
+        fetchTodayTotal();
       }
     }
 
@@ -953,7 +986,6 @@
 
     bigButtonEl.addEventListener("click", handleClick);
     muteBtnEl.addEventListener("click", toggleMute);
-    resetLinkEl.addEventListener("click", resetToday);
 
     document.querySelectorAll(".info-trigger").forEach((btn) => {
       btn.addEventListener("click", () => openInfoPanel(btn.dataset.target));
@@ -968,12 +1000,17 @@
 
     setInterval(checkMidnightReset, 60000);
     setInterval(decayMomentum, 150);
+    setInterval(fetchTodayTotal, 4000);
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) checkMidnightReset();
+      if (!document.hidden) {
+        checkMidnightReset();
+        fetchTodayTotal();
+      }
     });
 
     render();
     renderMuteButton();
+    fetchTodayTotal();
   </script>
 </body>
 </html>
