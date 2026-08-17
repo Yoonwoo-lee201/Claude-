@@ -27,17 +27,19 @@
   html, body {
     margin: 0;
     padding: 0;
+    height: 100%;
   }
 
   body {
     background: var(--black);
     color: var(--ash);
     font-family: "Helvetica Neue", Roboto, Arial, sans-serif;
-    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-x: hidden;
+    overflow: hidden;
     position: relative;
   }
 
@@ -49,12 +51,13 @@
   .nav {
     width: 100%;
     max-width: 1440px;
+    flex-shrink: 0;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 12px;
-    padding: 16px 20px;
+    gap: 8px;
+    padding: 10px 16px;
   }
 
   .team-credit {
@@ -99,14 +102,17 @@
 
   main {
     width: 100%;
+    flex: 1;
+    min-height: 0;
     display: flex;
     justify-content: center;
+    align-items: center;
   }
 
   .hero {
     width: 100%;
     max-width: 640px;
-    padding: 24px 20px 56px;
+    padding: 8px 20px;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -116,8 +122,8 @@
   .title-frame {
     width: 100%;
     border: 1px solid rgba(255, 192, 0, 0.4);
-    padding: 32px 24px;
-    margin: 20px 0 44px;
+    padding: 2vh 20px;
+    margin: 0 0 2vh;
     position: relative;
   }
 
@@ -145,27 +151,27 @@
   }
 
   .eyebrow {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.96px;
     color: var(--steel);
     text-transform: uppercase;
-    margin: 0 0 8px;
+    margin: 0 0 4px;
   }
 
   .hero-title {
-    font-size: clamp(40px, 9vw, 100px);
+    font-size: clamp(26px, 6vh, 48px);
     font-weight: 400;
-    line-height: 0.95;
+    line-height: 1;
     letter-spacing: 0.5px;
     color: var(--white);
     text-transform: uppercase;
     word-break: keep-all;
-    margin: 0 0 12px;
+    margin: 0 0 6px;
   }
 
   .hero-sub {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
     color: var(--smoke);
     margin: 0;
@@ -177,13 +183,13 @@
   }
 
   .counter-block {
-    margin-bottom: 52px;
+    margin-bottom: 2vh;
     width: 100%;
     max-width: 360px;
   }
 
   .counter-number {
-    font-size: clamp(44px, 10vw, 72px);
+    font-size: clamp(28px, 7vh, 52px);
     font-weight: 400;
     color: var(--gold);
     line-height: 1.1;
@@ -195,14 +201,14 @@
   }
 
   .counter-label {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--ash);
-    margin: 4px 0 20px;
+    margin: 2px 0 10px;
   }
 
   .progress-track {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background: var(--charcoal);
     overflow: hidden;
   }
@@ -215,19 +221,20 @@
   }
 
   .progress-label {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--ash);
-    margin-top: 12px;
+    margin-top: 8px;
   }
 
   .stage {
     position: relative;
-    width: 220px;
-    height: 220px;
+    width: clamp(90px, 18vh, 170px);
+    height: clamp(90px, 18vh, 170px);
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 36px;
+    margin-bottom: 1.5vh;
   }
 
   .pulse-ring {
@@ -251,14 +258,14 @@
   .big-button {
     position: relative;
     z-index: 1;
-    width: 200px;
-    height: 200px;
+    width: clamp(78px, 16vh, 150px);
+    height: clamp(78px, 16vh, 150px);
     border-radius: 50%;
     background: var(--gold);
     color: var(--black);
     border: none;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -278,21 +285,22 @@
   }
 
   .scope-note {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--steel);
     max-width: 360px;
-    line-height: 1.6;
+    line-height: 1.4;
     margin: 0;
   }
 
   footer.bottom-bar {
     width: 100%;
+    flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
-    padding: 8px 20px 40px;
+    padding: 6px 20px 10px;
   }
 
   .mute-btn {
@@ -301,10 +309,10 @@
     border: 1px solid rgba(255, 255, 255, 0.5);
     cursor: pointer;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 400;
     letter-spacing: 0.2px;
-    padding: 13px 20px;
+    padding: 8px 16px;
     transition: background-color var(--t) var(--ease), opacity var(--t) var(--ease);
   }
 
@@ -530,8 +538,6 @@
   }
 
   @media (max-width: 480px) {
-    .stage { width: 180px; height: 180px; }
-    .big-button { width: 160px; height: 160px; }
     .nav { flex-direction: column; align-items: flex-start; }
   }
 </style>
@@ -625,10 +631,26 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ── Supabase 설정: 대시보드 > 프로젝트 > Settings > API 에서 확인 후 채우기 ──
-    const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_ANON_PUBLIC_KEY";
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // ── Supabase 설정: Vercel 프로젝트 Settings > Environment Variables에
+    // SUPABASE_URL / SUPABASE_ANON_KEY를 등록하면 /api/config.js가 읽어서 내려준다.
+    let supabaseClient = null;
+
+    async function loadSupabaseConfig() {
+      try {
+        const res = await fetch("/api/config");
+        if (!res.ok) throw new Error(`config 요청 실패 (${res.status})`);
+        const config = await res.json();
+        if (!config.supabaseUrl || !config.supabaseAnonKey) {
+          throw new Error("SUPABASE_URL / SUPABASE_ANON_KEY 환경변수가 비어있음");
+        }
+        supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+        return true;
+      } catch (e) {
+        console.error("[Config] Supabase 설정 로드 실패:", e.message);
+        setScopeNote("Supabase 설정을 불러오지 못했어요. Vercel 환경변수를 확인해주세요.");
+        return false;
+      }
+    }
 
     const VISITOR_ID_KEY = "clickChallengeVisitorId";
     const STORAGE_KEY = "clickChallengeState";
@@ -911,6 +933,7 @@
     }
 
     async function fetchTodayTotal() {
+      if (!supabaseClient) return;
       const { data, error } = await supabaseClient.rpc("get_today_total");
       if (error) {
         console.error("[Supabase] 전체 카운트 조회 실패:", error.message);
@@ -927,6 +950,7 @@
     }
 
     async function recordClick() {
+      if (!supabaseClient) return;
       const { data, error } = await supabaseClient.rpc("record_click", { p_visitor_id: visitorId });
       if (error) {
         console.error("[Supabase] 클릭 반영 실패:", error.message);
@@ -1000,7 +1024,6 @@
 
     setInterval(checkMidnightReset, 60000);
     setInterval(decayMomentum, 150);
-    setInterval(fetchTodayTotal, 4000);
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
         checkMidnightReset();
@@ -1008,9 +1031,18 @@
       }
     });
 
-    render();
-    renderMuteButton();
-    fetchTodayTotal();
+    async function init() {
+      render();
+      renderMuteButton();
+
+      const ready = await loadSupabaseConfig();
+      if (ready) {
+        await fetchTodayTotal();
+        setInterval(fetchTodayTotal, 4000);
+      }
+    }
+
+    init();
   </script>
 </body>
 </html>
