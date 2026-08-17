@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>메가클릭 챌린지</title>
+<style>
+  :root {
+    --black: #000000;
+    --charcoal: #202020;
+    --dark-iron: #181818;
+    --gold: #FFC000;
+    --gold-dark: #917300;
+    --gold-text: #FFCE3E;
+    --white: #FFFFFF;
+    --smoke: #F5F5F5;
+    --ash: #7D7D7D;
+    --steel: #969696;
+    --cyan: #29ABE2;
+    --link-blue: #3860BE;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --t: 0.33s;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--black);
+    color: var(--ash);
+    font-family: "Helvetica Neue", Roboto, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ── Speed layer: the "going faster/farther" background feel ── */
+  .speed-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    --dur: 4.5s;
+  }
+
+  .speed-line {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 46px;
+    background: linear-gradient(to bottom, rgba(255, 192, 0, 0), rgba(255, 192, 0, 0.85));
+    transform-origin: top center;
+    animation: speed-fly var(--dur) linear infinite;
+    opacity: 0;
+  }
+
+  @keyframes speed-fly {
+    0% { transform: translate(-50%, -50%) rotate(var(--ang)) translateY(0) scaleY(0.3); opacity: 0; }
+    12% { opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) rotate(var(--ang)) translateY(75vh) scaleY(2); opacity: 0; }
+  }
+
+  .velocity-glow {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgba(255, 192, 0, 0.16) 0%, rgba(255, 192, 0, 0) 60%);
+    opacity: 0;
+    transition: opacity 0.4s var(--ease);
+  }
+
+  .nav, main, footer, .toast, .confetti-layer, .info-overlay {
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav {
+    width: 100%;
+    max-width: 1440px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .team-credit {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+    color: var(--steel);
+    text-transform: uppercase;
+    max-width: 260px;
+  }
+
+  .info-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .info-trigger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.96px;
+    color: var(--white);
+    text-transform: uppercase;
+    padding: 4px 2px;
+    transition: color var(--t) var(--ease);
+  }
+
+  .info-trigger:hover {
+    color: var(--gold);
+  }
+
+  .info-divider {
+    color: var(--steel);
+    font-size: 12px;
+  }
+
+  main {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .hero {
+    width: 100%;
+    max-width: 640px;
+    padding: 24px 20px 56px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.96px;
+    color: var(--steel);
+    text-transform: uppercase;
+    margin: 20px 0 8px;
+  }
+
+  .hero-title {
+    font-size: clamp(40px, 9vw, 100px);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.5px;
+    color: var(--white);
+    text-transform: uppercase;
+    margin: 0 0 12px;
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--smoke);
+    margin: 0 0 44px;
+  }
+
+  .hero-sub .accent {
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .counter-block {
+    margin-bottom: 52px;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .counter-number {
+    font-size: clamp(44px, 10vw, 72px);
+    font-weight: 400;
+    color: var(--gold);
+    line-height: 1.1;
+    transition: transform 0.12s var(--ease);
+  }
+
+  .counter-number.bump {
+    transform: scale(1.06);
+  }
+
+  .counter-label {
+    font-size: 14px;
+    color: var(--ash);
+    margin: 4px 0 20px;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    background: var(--charcoal);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--gold);
+    transition: width 0.4s var(--ease);
+  }
+
+  .progress-label {
+    font-size: 14px;
+    color: var(--ash);
+    margin-top: 12px;
+  }
+
+  .stage {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 36px;
+  }
+
+  .pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    opacity: 0;
+    animation: pulse 2.4s var(--ease) infinite;
+  }
+
+  .ring-2 {
+    animation-delay: 1.2s;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.9); opacity: 0.45; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+
+  .big-button {
+    position: relative;
+    z-index: 1;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: background-color var(--t) var(--ease), transform 0.12s var(--ease);
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+
+  .big-button:active {
+    transform: scale(0.96);
+    background: var(--gold-dark);
+    color: var(--white);
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.035); }
+  }
+
+  .scope-note {
+    font-size: 12px;
+    color: var(--steel);
+    max-width: 360px;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  footer.bottom-bar {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 8px 20px 40px;
+  }
+
+  .mute-btn {
+    background: transparent;
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+    padding: 13px 20px;
+    transition: background-color var(--t) var(--ease), opacity var(--t) var(--ease);
+  }
+
+  .mute-btn:hover {
+    background: var(--cyan);
+    border-color: var(--cyan);
+  }
+
+  .reset-btn {
+    background: var(--steel);
+    color: var(--charcoal);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    transition: background-color var(--t) var(--ease);
+  }
+
+  .reset-btn:hover {
+    background: var(--white);
+  }
+
+  .stage-shake {
+    animation: shake 0.32s var(--ease);
+  }
+
+  @keyframes shake {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-4px, 3px); }
+    40% { transform: translate(4px, -3px); }
+    60% { transform: translate(-3px, -2px); }
+    80% { transform: translate(3px, 2px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .particle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 6px;
+    pointer-events: none;
+    z-index: 20;
+    animation: particle-fly 0.7s ease-out forwards;
+  }
+
+  @keyframes particle-fly {
+    from { opacity: 1; transform: translate(var(--sx), var(--sy)) scale(1); }
+    to { opacity: 0; transform: translate(var(--ex), var(--ey)) scale(0.3); }
+  }
+
+  .float-plus {
+    position: fixed;
+    z-index: 20;
+    pointer-events: none;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    animation: float-up 0.8s ease-out forwards;
+  }
+
+  @keyframes float-up {
+    from { opacity: 1; transform: translate(-50%, 0); }
+    to { opacity: 0; transform: translate(-50%, -40px); }
+  }
+
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, -140%);
+    background: var(--charcoal);
+    color: var(--white);
+    border-left: 3px solid var(--gold);
+    padding: 16px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: transform var(--t) var(--ease);
+    z-index: 30;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  .toast.show {
+    transform: translate(-50%, 0);
+  }
+
+  .confetti-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 25;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    top: -20px;
+    animation: confetti-fall linear forwards;
+  }
+
+  @keyframes confetti-fall {
+    to { transform: translateY(110vh) rotate(var(--rot)); opacity: 0.9; }
+  }
+
+  .info-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 40;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .info-overlay.show {
+    display: flex;
+  }
+
+  .info-panel {
+    background: var(--dark-iron);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--smoke);
+    width: 100%;
+    max-width: 560px;
+    max-height: 82vh;
+    overflow-y: auto;
+    padding: 32px 28px;
+    position: relative;
+    text-align: left;
+  }
+
+  .info-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: var(--white);
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: border-color var(--t) var(--ease), color var(--t) var(--ease);
+  }
+
+  .info-close:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .info-panel section {
+    margin-bottom: 28px;
+  }
+
+  .info-panel section:last-child {
+    margin-bottom: 0;
+  }
+
+  .info-panel h2 {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.96px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 12px;
+  }
+
+  .info-panel h3 {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--steel);
+    margin: 20px 0 8px;
+  }
+
+  .info-panel p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--smoke);
+    margin: 0 0 8px;
+  }
+
+  .info-panel ol, .info-panel ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--smoke);
+  }
+
+  .info-panel li {
+    margin-bottom: 6px;
+  }
+
+  .info-panel li strong {
+    color: var(--white);
+  }
+
+  .info-panel .muted {
+    color: var(--steel);
+    font-size: 12px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .big-button, .pulse-ring {
+      animation: none;
+    }
+    .stage-shake {
+      animation: none;
+    }
+    .particle, .float-plus, .confetti-piece {
+      animation-duration: 0.01ms !important;
+    }
+    .speed-layer, .velocity-glow {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stage { width: 180px; height: 180px; }
+    .big-button { width: 160px; height: 160px; }
+    .nav { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+  <div class="speed-layer" id="speedLayer"></div>
+  <div class="velocity-glow" id="velocityGlow"></div>
+
+  <header class="nav">
+    <div class="team-credit">SKKU '26년 도전학기 팀 프로젝트 (팀 145)<br />: 이윤우, 박서현, 장윤지, 성현중, 문영호</div>
+    <nav class="info-nav">
+      <button class="info-trigger" data-target="section-about" type="button">About</button>
+      <span class="info-divider">|</span>
+      <button class="info-trigger" data-target="section-credits" type="button">만든이</button>
+      <span class="info-divider">|</span>
+      <button class="info-trigger" data-target="section-date" type="button">만든 날짜</button>
+      <span class="info-divider">|</span>
+      <button class="info-trigger" data-target="section-version" type="button">버전</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">오늘의 챌린지</p>
+      <h1 class="hero-title">메가클릭 챌린지</h1>
+      <p class="hero-sub">다 같이 눌러서 <span class="accent">100만 클릭</span> 채우기</p>
+
+      <div class="counter-block">
+        <div class="counter-number" id="counterNumber">0</div>
+        <p class="counter-label">오늘 누적 클릭</p>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-label" id="progressLabel">목표 1,000,000 클릭까지 0.00% 달성</p>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="pulse-ring ring-1"></div>
+        <div class="pulse-ring ring-2"></div>
+        <button class="big-button" id="bigButton" type="button">Click</button>
+      </div>
+
+      <p class="scope-note">지금은 이 브라우저 기준 카운트예요. 전체 사용자 합산은 배포 후 서버 저장소(Supabase) 연동이 필요해요.</p>
+    </section>
+  </main>
+
+  <footer class="bottom-bar">
+    <button class="mute-btn" id="muteBtn" type="button">🔊 소리 켜짐</button>
+    <button class="reset-btn" id="resetLink" type="button">오늘 카운트 초기화 (테스트용)</button>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <div class="confetti-layer" id="confettiLayer"></div>
+
+  <div class="info-overlay" id="infoOverlay">
+    <div class="info-panel">
+      <button class="info-close" id="infoClose" type="button">✕</button>
+
+      <section id="section-about">
+        <h2>About</h2>
+        <p>메가 클릭 챌린지는 SKKU 2026년 도전학기 팀 프로젝트(팀 145)로 만든 미니 게임형 웹 서비스입니다. 큰 버튼을 누르면 이펙트가 터지고, 오늘 하루 모두가 함께 누른 클릭 수를 100만 클릭 목표로 채워갑니다.</p>
+        <h3>제작 과정</h3>
+        <ol>
+          <li>각자 강의에서 다룬 VS Code + Claude Code 환경을 구축해 디자인 가이드(design.md)를 적용한 index.html을 5명이 각자 제작</li>
+          <li>5개의 샘플 중 팀 투표로 최종 결과물 1개 선정</li>
+          <li>이후 역할을 나누어 배포, DB·애널리틱스·SEO 세팅, 발표자료 제작, 영상 녹화까지 진행</li>
+        </ol>
+      </section>
+
+      <section id="section-credits">
+        <h2>만든이</h2>
+        <ul>
+          <li><strong>이윤우</strong> — GitHub 업로드 · Vercel 호스팅(서비스 주소 생성) · 2차 구현</li>
+          <li><strong>박서현</strong> — Supabase · Google Analytics 세팅, Google Search Console 등록(SEO 노출), 팀원 전체 사용 유도(DB 적재 · 통계 확보)</li>
+          <li><strong>장윤지</strong> — 전 과정 PPT 제작, 영상 녹화용 스크립트 작성</li>
+          <li><strong>성현중</strong> — PPT 기반 영상 녹화 — 서비스 데모 + Google Analytics 결과 포함 (5분 영상)</li>
+          <li><strong>문영호</strong> (팀장) — 기말과제 총괄 기획 · 팀 운영/일정관리 · 1차 구현 · 과제 제출 · 교수님/조교님 소통 · 팀원 의견 조율</li>
+        </ul>
+      </section>
+
+      <section id="section-date">
+        <h2>만든 날짜</h2>
+        <p>2026. 08. 17</p>
+        <p class="muted">최초 제작일 (SKKU 2026 도전학기)</p>
+      </section>
+
+      <section id="section-version">
+        <h2>버전</h2>
+        <p>v0.2.0</p>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "clickChallengeState";
+    const GOAL = 1000000;
+    const MILESTONES = [25, 50, 75, 100];
+    const PARTICLE_TONES = ["#FFC000", "#FFCE3E", "#FFFFFF", "#969696"];
+
+    const counterNumberEl = document.getElementById("counterNumber");
+    const progressFillEl = document.getElementById("progressFill");
+    const progressLabelEl = document.getElementById("progressLabel");
+    const stageEl = document.getElementById("stage");
+    const bigButtonEl = document.getElementById("bigButton");
+    const muteBtnEl = document.getElementById("muteBtn");
+    const resetLinkEl = document.getElementById("resetLink");
+    const toastEl = document.getElementById("toast");
+    const confettiLayerEl = document.getElementById("confettiLayer");
+    const speedLayerEl = document.getElementById("speedLayer");
+    const velocityGlowEl = document.getElementById("velocityGlow");
+    const infoOverlayEl = document.getElementById("infoOverlay");
+    const infoCloseEl = document.getElementById("infoClose");
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let audioCtx = null;
+    let toastTimer = null;
+
+    // ── "클릭할수록 더 멀리 가는" 속도감: 클릭마다 momentum이 오르고
+    // 시간이 지나면 서서히 가라앉으며, 배경 speed-line 애니메이션 속도와
+    // 글로우 밝기에 반영된다.
+    const BASE_DUR = 4.5;
+    const MIN_DUR = 0.6;
+    let momentum = 0;
+
+    function setupSpeedLines() {
+      if (prefersReducedMotion) return;
+      const lineCount = 36;
+      for (let i = 0; i < lineCount; i++) {
+        const line = document.createElement("div");
+        line.className = "speed-line";
+        const angle = (360 / lineCount) * i;
+        line.style.setProperty("--ang", `${angle}deg`);
+        line.style.animationDelay = `${(i / lineCount) * BASE_DUR}s`;
+        speedLayerEl.appendChild(line);
+      }
+    }
+
+    function updateSpeed() {
+      const dur = BASE_DUR - momentum * (BASE_DUR - MIN_DUR);
+      speedLayerEl.style.setProperty("--dur", `${dur.toFixed(2)}s`);
+      velocityGlowEl.style.opacity = momentum.toFixed(2);
+    }
+
+    function boostMomentum() {
+      if (prefersReducedMotion) return;
+      momentum = Math.min(1, momentum + 0.12);
+      updateSpeed();
+    }
+
+    function decayMomentum() {
+      if (momentum <= 0) return;
+      momentum = Math.max(0, momentum - 0.04);
+      updateSpeed();
+    }
+
+    function todayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    }
+
+    function loadState() {
+      let raw = null;
+      try {
+        raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      } catch (e) {
+        raw = null;
+      }
+
+      const today = todayKey();
+      if (!raw || raw.date !== today) {
+        return { date: today, count: 0, milestonesShown: [], muted: raw ? !!raw.muted : false };
+      }
+      return {
+        date: raw.date,
+        count: raw.count || 0,
+        milestonesShown: raw.milestonesShown || [],
+        muted: !!raw.muted,
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    let state = loadState();
+
+    function formatNumber(n) {
+      return n.toLocaleString("ko-KR");
+    }
+
+    function render() {
+      counterNumberEl.textContent = formatNumber(state.count);
+      counterNumberEl.classList.remove("bump");
+      void counterNumberEl.offsetWidth;
+      counterNumberEl.classList.add("bump");
+
+      const percent = Math.min(100, (state.count / GOAL) * 100);
+      progressFillEl.style.width = `${percent.toFixed(6)}%`;
+      progressLabelEl.textContent = `목표 ${formatNumber(GOAL)} 클릭까지 ${percent.toFixed(2)}% 달성`;
+    }
+
+    function renderMuteButton() {
+      muteBtnEl.textContent = state.muted ? "🔇 소리 꺼짐" : "🔊 소리 켜짐";
+    }
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playPop() {
+      if (state.muted) return;
+      const ctx = ensureAudioContext();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "square";
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.12);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.16);
+    }
+
+    function playChime() {
+      if (state.muted) return;
+      const ctx = ensureAudioContext();
+      const now = ctx.currentTime;
+      const notes = [660, 880, 1100];
+
+      notes.forEach((freq, i) => {
+        const start = now + i * 0.09;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, start);
+
+        gain.gain.setValueAtTime(0.001, start);
+        gain.gain.linearRampToValueAtTime(0.14, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.32);
+      });
+    }
+
+    function triggerVibration(pattern) {
+      if (navigator.vibrate) {
+        navigator.vibrate(pattern);
+      }
+    }
+
+    function triggerShake() {
+      if (prefersReducedMotion) return;
+      stageEl.classList.remove("stage-shake");
+      void stageEl.offsetWidth;
+      stageEl.classList.add("stage-shake");
+    }
+
+    function spawnParticles(originX, originY) {
+      if (prefersReducedMotion) return;
+      const count = 12;
+      for (let i = 0; i < count; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+        const distance = 50 + Math.random() * 50;
+        const endX = Math.cos(angle) * distance;
+        const endY = Math.sin(angle) * distance;
+
+        particle.style.background = PARTICLE_TONES[i % PARTICLE_TONES.length];
+        particle.style.setProperty("--sx", `${originX}px`);
+        particle.style.setProperty("--sy", `${originY}px`);
+        particle.style.setProperty("--ex", `${originX + endX}px`);
+        particle.style.setProperty("--ey", `${originY + endY}px`);
+
+        document.body.appendChild(particle);
+        particle.addEventListener("animationend", () => particle.remove());
+      }
+    }
+
+    function spawnFloatingPlus(originX, originY) {
+      if (prefersReducedMotion) return;
+      const el = document.createElement("div");
+      el.className = "float-plus";
+      el.textContent = "+1";
+      el.style.left = `${originX}px`;
+      el.style.top = `${originY - 20}px`;
+      document.body.appendChild(el);
+      el.addEventListener("animationend", () => el.remove());
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2600);
+    }
+
+    function spawnConfetti() {
+      if (prefersReducedMotion) return;
+      const pieceCount = 80;
+      for (let i = 0; i < pieceCount; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+
+        const size = 6 + Math.random() * 6;
+        const duration = 2.2 + Math.random() * 1.4;
+        const rot = 180 + Math.random() * 540;
+
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.width = `${size}px`;
+        piece.style.height = `${size * 0.4}px`;
+        piece.style.background = PARTICLE_TONES[i % PARTICLE_TONES.length];
+        piece.style.animationDuration = `${duration}s`;
+        piece.style.animationDelay = `${Math.random() * 0.4}s`;
+        piece.style.setProperty("--rot", `${rot}deg`);
+
+        confettiLayerEl.appendChild(piece);
+        piece.addEventListener("animationend", () => piece.remove());
+      }
+    }
+
+    function checkMilestones() {
+      const percent = (state.count / GOAL) * 100;
+      MILESTONES.forEach((m) => {
+        if (percent >= m && !state.milestonesShown.includes(m)) {
+          state.milestonesShown.push(m);
+          showToast(`🎉 오늘 목표의 ${m}%를 달성했어요!`);
+          spawnConfetti();
+          playChime();
+          triggerVibration([40, 60, 40]);
+        }
+      });
+    }
+
+    function handleClick(event) {
+      const rect = bigButtonEl.getBoundingClientRect();
+      const originX = rect.left + rect.width / 2;
+      const originY = rect.top + rect.height / 2;
+
+      triggerShake();
+      spawnParticles(originX, originY);
+      spawnFloatingPlus(originX, originY);
+      playPop();
+      triggerVibration(15);
+      boostMomentum();
+
+      state.count += 1;
+      saveState();
+      render();
+      checkMilestones();
+    }
+
+    function toggleMute() {
+      state.muted = !state.muted;
+      saveState();
+      renderMuteButton();
+    }
+
+    function resetToday() {
+      state = { date: todayKey(), count: 0, milestonesShown: [], muted: state.muted };
+      saveState();
+      render();
+    }
+
+    function checkMidnightReset() {
+      const today = todayKey();
+      if (state.date !== today) {
+        state = { date: today, count: 0, milestonesShown: [], muted: state.muted };
+        saveState();
+        render();
+      }
+    }
+
+    function openInfoPanel(targetId) {
+      infoOverlayEl.classList.add("show");
+      if (targetId) {
+        const target = document.getElementById(targetId);
+        if (target) target.scrollIntoView({ block: "start" });
+      }
+    }
+
+    function closeInfoPanel() {
+      infoOverlayEl.classList.remove("show");
+    }
+
+    bigButtonEl.addEventListener("click", handleClick);
+    muteBtnEl.addEventListener("click", toggleMute);
+    resetLinkEl.addEventListener("click", resetToday);
+
+    document.querySelectorAll(".info-trigger").forEach((btn) => {
+      btn.addEventListener("click", () => openInfoPanel(btn.dataset.target));
+    });
+    infoCloseEl.addEventListener("click", closeInfoPanel);
+    infoOverlayEl.addEventListener("click", (e) => {
+      if (e.target === infoOverlayEl) closeInfoPanel();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeInfoPanel();
+    });
+
+    setInterval(checkMidnightReset, 60000);
+    setInterval(decayMomentum, 150);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) checkMidnightReset();
+    });
+
+    setupSpeedLines();
+    updateSpeed();
+    render();
+    renderMuteButton();
+  </script>
+</body>
+</html>
