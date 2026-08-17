@@ -41,44 +41,6 @@
     position: relative;
   }
 
-  /* ── Speed layer: the "going faster/farther" background feel ── */
-  .speed-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    pointer-events: none;
-    --dur: 4.5s;
-  }
-
-  .speed-line {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 2px;
-    height: 46px;
-    background: linear-gradient(to bottom, rgba(255, 192, 0, 0), rgba(255, 192, 0, 0.85));
-    transform-origin: top center;
-    animation: speed-fly var(--dur) linear infinite;
-    opacity: 0;
-  }
-
-  @keyframes speed-fly {
-    0% { transform: translate(-50%, -50%) rotate(var(--ang)) translateY(0) scaleY(0.3); opacity: 0; }
-    12% { opacity: 0.9; }
-    100% { transform: translate(-50%, -50%) rotate(var(--ang)) translateY(75vh) scaleY(2); opacity: 0; }
-  }
-
-  .velocity-glow {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(circle at center, rgba(255, 192, 0, 0.16) 0%, rgba(255, 192, 0, 0) 60%);
-    opacity: 0;
-    transition: opacity 0.4s var(--ease);
-  }
-
   .nav, main, footer, .toast, .confetti-layer, .info-overlay {
     position: relative;
     z-index: 1;
@@ -151,13 +113,44 @@
     align-items: center;
   }
 
+  .title-frame {
+    width: 100%;
+    border: 1px solid rgba(255, 192, 0, 0.4);
+    padding: 32px 24px;
+    margin: 20px 0 44px;
+    position: relative;
+  }
+
+  .title-frame::before,
+  .title-frame::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--gold);
+  }
+
+  .title-frame::before {
+    top: -2px;
+    left: -2px;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .title-frame::after {
+    bottom: -2px;
+    right: -2px;
+    border-left: none;
+    border-top: none;
+  }
+
   .eyebrow {
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.96px;
     color: var(--steel);
     text-transform: uppercase;
-    margin: 20px 0 8px;
+    margin: 0 0 8px;
   }
 
   .hero-title {
@@ -175,7 +168,7 @@
     font-size: 16px;
     font-weight: 400;
     color: var(--smoke);
-    margin: 0 0 44px;
+    margin: 0;
   }
 
   .hero-sub .accent {
@@ -351,20 +344,40 @@
     100% { transform: translate(0, 0); }
   }
 
-  .particle {
+  .firework-rocket {
     position: fixed;
     top: 0;
     left: 0;
-    width: 6px;
-    height: 6px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.85);
     pointer-events: none;
-    z-index: 20;
-    animation: particle-fly 0.7s ease-out forwards;
+    z-index: 22;
+    animation: firework-rocket-fly 0.5s cubic-bezier(0.25, 0.65, 0.35, 1) forwards;
   }
 
-  @keyframes particle-fly {
+  @keyframes firework-rocket-fly {
+    from { opacity: 1; transform: translate(var(--sx), var(--sy)); }
+    to { opacity: 1; transform: translate(var(--ex), var(--ey)); }
+  }
+
+  .firework-particle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 22;
+    animation: firework-burst 0.9s cubic-bezier(0.15, 0.6, 0.3, 1) forwards;
+  }
+
+  @keyframes firework-burst {
     from { opacity: 1; transform: translate(var(--sx), var(--sy)) scale(1); }
-    to { opacity: 0; transform: translate(var(--ex), var(--ey)) scale(0.3); }
+    to { opacity: 0; transform: translate(var(--ex), var(--ey)) scale(0.4); }
   }
 
   .float-plus {
@@ -468,12 +481,12 @@
     color: var(--gold);
   }
 
-  .info-panel section {
-    margin-bottom: 28px;
+  .info-section {
+    display: none;
   }
 
-  .info-panel section:last-child {
-    margin-bottom: 0;
+  .info-section.active {
+    display: block;
   }
 
   .info-panel h2 {
@@ -529,11 +542,8 @@
     .stage-shake {
       animation: none;
     }
-    .particle, .float-plus, .confetti-piece {
+    .firework-rocket, .firework-particle, .float-plus, .confetti-piece {
       animation-duration: 0.01ms !important;
-    }
-    .speed-layer, .velocity-glow {
-      display: none;
     }
   }
 
@@ -545,9 +555,6 @@
 </style>
 </head>
 <body>
-  <div class="speed-layer" id="speedLayer"></div>
-  <div class="velocity-glow" id="velocityGlow"></div>
-
   <header class="nav">
     <div class="team-credit">SKKU '26년 도전학기 팀 프로젝트 (팀 145)<br />: 이윤우, 박서현, 장윤지, 성현중, 문영호</div>
     <nav class="info-nav">
@@ -563,9 +570,11 @@
 
   <main>
     <section class="hero">
-      <p class="eyebrow">오늘의 챌린지</p>
-      <h1 class="hero-title">메가클릭<br />챌린지</h1>
-      <p class="hero-sub">다 같이 눌러서 <span class="accent">100만 클릭</span> 채우기</p>
+      <div class="title-frame">
+        <p class="eyebrow">오늘의 챌린지</p>
+        <h1 class="hero-title">메가클릭<br />챌린지</h1>
+        <p class="hero-sub">다 같이 눌러서 <span class="accent">100만 클릭</span> 채우기</p>
+      </div>
 
       <div class="counter-block">
         <div class="counter-number" id="counterNumber">0</div>
@@ -598,7 +607,7 @@
     <div class="info-panel">
       <button class="info-close" id="infoClose" type="button">✕</button>
 
-      <section id="section-about">
+      <section id="section-about" class="info-section">
         <h2>About</h2>
         <p>메가 클릭 챌린지는 SKKU 2026년 도전학기 팀 프로젝트(팀 145)로 만든 미니 게임형 웹 서비스입니다. 큰 버튼을 누르면 이펙트가 터지고, 오늘 하루 모두가 함께 누른 클릭 수를 100만 클릭 목표로 채워갑니다.</p>
         <h3>제작 과정</h3>
@@ -609,7 +618,7 @@
         </ol>
       </section>
 
-      <section id="section-credits">
+      <section id="section-credits" class="info-section">
         <h2>만든이</h2>
         <ul>
           <li><strong>이윤우</strong> — GitHub 업로드 · Vercel 호스팅(서비스 주소 생성) · 2차 구현</li>
@@ -620,13 +629,13 @@
         </ul>
       </section>
 
-      <section id="section-date">
+      <section id="section-date" class="info-section">
         <h2>만든 날짜</h2>
         <p>2026. 08. 17</p>
         <p class="muted">최초 제작일 (SKKU 2026 도전학기)</p>
       </section>
 
-      <section id="section-version">
+      <section id="section-version" class="info-section">
         <h2>버전</h2>
         <p>v0.2.0</p>
       </section>
@@ -637,7 +646,6 @@
     const STORAGE_KEY = "clickChallengeState";
     const GOAL = 1000000;
     const MILESTONES = [25, 50, 75, 100];
-    const PARTICLE_TONES = ["#FFC000", "#FFCE3E", "#FFFFFF", "#969696"];
 
     const counterNumberEl = document.getElementById("counterNumber");
     const progressFillEl = document.getElementById("progressFill");
@@ -648,8 +656,6 @@
     const resetLinkEl = document.getElementById("resetLink");
     const toastEl = document.getElementById("toast");
     const confettiLayerEl = document.getElementById("confettiLayer");
-    const speedLayerEl = document.getElementById("speedLayer");
-    const velocityGlowEl = document.getElementById("velocityGlow");
     const infoOverlayEl = document.getElementById("infoOverlay");
     const infoCloseEl = document.getElementById("infoClose");
 
@@ -658,42 +664,21 @@
     let audioCtx = null;
     let toastTimer = null;
 
-    // ── "클릭할수록 더 멀리 가는" 속도감: 클릭마다 momentum이 오르고
-    // 시간이 지나면 서서히 가라앉으며, 배경 speed-line 애니메이션 속도와
-    // 글로우 밝기에 반영된다.
-    const BASE_DUR = 4.5;
-    const MIN_DUR = 0.6;
+    // ── "클릭할수록 더 화려해지는" 느낌: 클릭마다 momentum이 오르고
+    // 시간이 지나면 서서히 가라앉으며, 폭죽 한 방의 파티클 개수/거리에 반영된다.
+    // (연속으로 빠르게 누를수록 폭죽이 더 크고 풍성해짐)
     let momentum = 0;
 
-    function setupSpeedLines() {
-      if (prefersReducedMotion) return;
-      const lineCount = 36;
-      for (let i = 0; i < lineCount; i++) {
-        const line = document.createElement("div");
-        line.className = "speed-line";
-        const angle = (360 / lineCount) * i;
-        line.style.setProperty("--ang", `${angle}deg`);
-        line.style.animationDelay = `${(i / lineCount) * BASE_DUR}s`;
-        speedLayerEl.appendChild(line);
-      }
-    }
-
-    function updateSpeed() {
-      const dur = BASE_DUR - momentum * (BASE_DUR - MIN_DUR);
-      speedLayerEl.style.setProperty("--dur", `${dur.toFixed(2)}s`);
-      velocityGlowEl.style.opacity = momentum.toFixed(2);
-    }
-
     function boostMomentum() {
-      if (prefersReducedMotion) return;
       momentum = Math.min(1, momentum + 0.12);
-      updateSpeed();
     }
 
     function decayMomentum() {
-      if (momentum <= 0) return;
       momentum = Math.max(0, momentum - 0.04);
-      updateSpeed();
+    }
+
+    function randomRainbow() {
+      return `hsl(${Math.floor(Math.random() * 360)}, 90%, 60%)`;
     }
 
     function todayKey() {
@@ -815,27 +800,50 @@
       stageEl.classList.add("stage-shake");
     }
 
-    function spawnParticles(originX, originY) {
-      if (prefersReducedMotion) return;
-      const count = 12;
+    function burstFirework(x, y) {
+      const count = Math.round(18 + momentum * 26);
       for (let i = 0; i < count; i++) {
         const particle = document.createElement("div");
-        particle.className = "particle";
+        particle.className = "firework-particle";
 
-        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
-        const distance = 50 + Math.random() * 50;
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+        const distance = 40 + Math.random() * 70 + momentum * 40;
         const endX = Math.cos(angle) * distance;
-        const endY = Math.sin(angle) * distance;
+        const endY = Math.sin(angle) * distance + 30;
 
-        particle.style.background = PARTICLE_TONES[i % PARTICLE_TONES.length];
-        particle.style.setProperty("--sx", `${originX}px`);
-        particle.style.setProperty("--sy", `${originY}px`);
-        particle.style.setProperty("--ex", `${originX + endX}px`);
-        particle.style.setProperty("--ey", `${originY + endY}px`);
+        particle.style.background = randomRainbow();
+        particle.style.setProperty("--sx", `${x}px`);
+        particle.style.setProperty("--sy", `${y}px`);
+        particle.style.setProperty("--ex", `${x + endX}px`);
+        particle.style.setProperty("--ey", `${y + endY}px`);
 
         document.body.appendChild(particle);
         particle.addEventListener("animationend", () => particle.remove());
       }
+    }
+
+    function launchFirework(originX) {
+      if (prefersReducedMotion) {
+        burstFirework(originX, window.innerHeight * 0.3);
+        return;
+      }
+
+      const startX = originX + (Math.random() - 0.5) * 40;
+      const startY = window.innerHeight + 20;
+      const burstY = window.innerHeight * (0.18 + Math.random() * 0.14);
+
+      const rocket = document.createElement("div");
+      rocket.className = "firework-rocket";
+      rocket.style.setProperty("--sx", `${startX}px`);
+      rocket.style.setProperty("--sy", `${startY}px`);
+      rocket.style.setProperty("--ex", `${startX}px`);
+      rocket.style.setProperty("--ey", `${burstY}px`);
+      document.body.appendChild(rocket);
+
+      rocket.addEventListener("animationend", () => {
+        rocket.remove();
+        burstFirework(startX, burstY);
+      });
     }
 
     function spawnFloatingPlus(originX, originY) {
@@ -870,7 +878,7 @@
         piece.style.left = `${Math.random() * 100}%`;
         piece.style.width = `${size}px`;
         piece.style.height = `${size * 0.4}px`;
-        piece.style.background = PARTICLE_TONES[i % PARTICLE_TONES.length];
+        piece.style.background = randomRainbow();
         piece.style.animationDuration = `${duration}s`;
         piece.style.animationDelay = `${Math.random() * 0.4}s`;
         piece.style.setProperty("--rot", `${rot}deg`);
@@ -899,11 +907,11 @@
       const originY = rect.top + rect.height / 2;
 
       triggerShake();
-      spawnParticles(originX, originY);
+      boostMomentum();
+      launchFirework(originX);
       spawnFloatingPlus(originX, originY);
       playPop();
       triggerVibration(15);
-      boostMomentum();
 
       state.count += 1;
       saveState();
@@ -933,11 +941,10 @@
     }
 
     function openInfoPanel(targetId) {
+      document.querySelectorAll(".info-section").forEach((section) => {
+        section.classList.toggle("active", section.id === targetId);
+      });
       infoOverlayEl.classList.add("show");
-      if (targetId) {
-        const target = document.getElementById(targetId);
-        if (target) target.scrollIntoView({ block: "start" });
-      }
     }
 
     function closeInfoPanel() {
@@ -965,8 +972,6 @@
       if (!document.hidden) checkMidnightReset();
     });
 
-    setupSpeedLines();
-    updateSpeed();
     render();
     renderMuteButton();
   </script>
