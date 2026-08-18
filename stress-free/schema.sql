@@ -76,3 +76,18 @@ end;
 $$;
 
 grant execute on function record_click(uuid) to anon;
+
+-- 오늘 전체 클릭 기록을 삭제해서 합산을 0으로 되돌린다 (RESET 버튼용, 테스트/데모 용도)
+create or replace function reset_today_clicks()
+returns bigint
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from daily_clicks where click_date = current_date;
+  return 0;
+end;
+$$;
+
+grant execute on function reset_today_clicks() to anon;

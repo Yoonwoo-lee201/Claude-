@@ -330,6 +330,26 @@
     border-color: var(--cyan);
   }
 
+  .reset-btn {
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    transition: background-color var(--t) var(--ease);
+  }
+
+  .reset-btn:hover {
+    background: var(--gold-dark);
+    color: var(--white);
+  }
+
   .skku-badge {
     position: fixed;
     left: 12px;
@@ -556,6 +576,64 @@
     font-size: 12px;
   }
 
+  .admin-label {
+    display: block;
+    font-size: 12px;
+    color: var(--steel);
+    margin: 12px 0 6px;
+  }
+
+  .admin-label:first-child {
+    margin-top: 0;
+  }
+
+  .admin-input {
+    width: 100%;
+    background: var(--black);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--white);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .admin-input:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+
+  .admin-error {
+    color: #ff6b6b;
+    font-size: 12px;
+    min-height: 16px;
+    margin: 8px 0 0;
+  }
+
+  .admin-login-btn {
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    margin-top: 14px;
+    transition: background-color var(--t) var(--ease);
+  }
+
+  .admin-login-btn:hover {
+    background: var(--gold-dark);
+    color: var(--white);
+  }
+
+  .admin-panel-view {
+    display: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .big-button, .pulse-ring {
       animation: none;
@@ -584,6 +662,8 @@
       <button class="info-trigger" data-target="section-date" type="button">만든 날짜</button>
       <span class="info-divider">|</span>
       <button class="info-trigger" data-target="section-version" type="button">버전</button>
+      <span class="info-divider">|</span>
+      <button class="info-trigger" data-target="section-admin" type="button">관리자</button>
     </nav>
   </header>
 
@@ -665,6 +745,22 @@
         <h2>버전</h2>
         <p>v0.2.0</p>
       </section>
+
+      <section id="section-admin" class="info-section">
+        <h2>관리자</h2>
+        <div id="adminLoginView">
+          <label class="admin-label" for="adminId">아이디</label>
+          <input class="admin-input" id="adminId" type="text" autocomplete="off" />
+          <label class="admin-label" for="adminPw">비밀번호</label>
+          <input class="admin-input" id="adminPw" type="password" autocomplete="off" />
+          <p class="admin-error" id="adminError"></p>
+          <button class="admin-login-btn" id="adminLoginBtn" type="button">로그인</button>
+        </div>
+        <div id="adminPanelView" class="admin-panel-view">
+          <p>관리자 모드입니다. 오늘 전체 클릭 수를 초기화할 수 있어요.</p>
+          <button class="reset-btn" id="resetBtn" type="button">Reset</button>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -696,6 +792,9 @@
     const GOAL = 1000000;
     const MILESTONES = [25, 50, 75, 100];
     const DEFAULT_SCOPE_NOTE = "오늘 모두가 함께 누른 클릭이에요. Supabase에 실시간으로 합산돼요.";
+    const ADMIN_ID = "admin";
+    const ADMIN_PW = "1234";
+    let isAdminLoggedIn = false;
 
     const counterNumberEl = document.getElementById("counterNumber");
     const progressFillEl = document.getElementById("progressFill");
@@ -703,6 +802,13 @@
     const stageEl = document.getElementById("stage");
     const bigButtonEl = document.getElementById("bigButton");
     const muteBtnEl = document.getElementById("muteBtn");
+    const resetBtnEl = document.getElementById("resetBtn");
+    const adminLoginViewEl = document.getElementById("adminLoginView");
+    const adminPanelViewEl = document.getElementById("adminPanelView");
+    const adminIdEl = document.getElementById("adminId");
+    const adminPwEl = document.getElementById("adminPw");
+    const adminErrorEl = document.getElementById("adminError");
+    const adminLoginBtnEl = document.getElementById("adminLoginBtn");
     const skkuBadgeEl = document.getElementById("skkuBadge");
     const scopeNoteEl = document.getElementById("scopeNote");
     const toastEl = document.getElementById("toast");
@@ -1003,6 +1109,24 @@
       checkMilestones();
     }
 
+    async function resetTodayClicks() {
+      if (!supabaseClient) return;
+      const confirmed = window.confirm("오늘 전체 사용자 클릭 수를 0으로 초기화할까요? 되돌릴 수 없어요.");
+      if (!confirmed) return;
+
+      const { data, error } = await supabaseClient.rpc("reset_today_clicks");
+      if (error) {
+        console.error("[Supabase] 초기화 실패:", error.message);
+        setScopeNote("초기화에 실패했어요. 연결을 확인해주세요.");
+        return;
+      }
+      setScopeNote(DEFAULT_SCOPE_NOTE);
+      state.count = data || 0;
+      state.milestonesShown = [];
+      savePrefs();
+      render();
+    }
+
     function handleClick(event) {
       const rect = bigButtonEl.getBoundingClientRect();
       const originX = rect.left + rect.width / 2;
@@ -1048,8 +1172,30 @@
       infoOverlayEl.classList.remove("show");
     }
 
+    function renderAdminView() {
+      adminLoginViewEl.style.display = isAdminLoggedIn ? "none" : "block";
+      adminPanelViewEl.style.display = isAdminLoggedIn ? "block" : "none";
+    }
+
+    function attemptAdminLogin() {
+      if (adminIdEl.value === ADMIN_ID && adminPwEl.value === ADMIN_PW) {
+        isAdminLoggedIn = true;
+        adminErrorEl.textContent = "";
+        adminIdEl.value = "";
+        adminPwEl.value = "";
+        renderAdminView();
+      } else {
+        adminErrorEl.textContent = "아이디 또는 비밀번호가 올바르지 않아요.";
+      }
+    }
+
     bigButtonEl.addEventListener("click", handleClick);
     muteBtnEl.addEventListener("click", toggleMute);
+    resetBtnEl.addEventListener("click", resetTodayClicks);
+    adminLoginBtnEl.addEventListener("click", attemptAdminLogin);
+    adminPwEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") attemptAdminLogin();
+    });
     skkuBadgeEl.addEventListener("click", () => {
       gtag("event", "skku_link_click", { link_url: "https://www.skku.edu/skku/index.do" });
     });
@@ -1077,6 +1223,7 @@
     async function init() {
       render();
       renderMuteButton();
+      renderAdminView();
 
       const ready = await loadSupabaseConfig();
       if (ready) {
