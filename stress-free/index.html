@@ -634,6 +634,64 @@
     display: none;
   }
 
+  .reset-confirm-view {
+    display: none;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .reset-confirm-view.show {
+    display: block;
+  }
+
+  .reset-confirm-text {
+    font-size: 13px;
+    color: var(--smoke);
+    margin: 0 0 10px;
+  }
+
+  .reset-confirm-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .reset-confirm-btn {
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    transition: background-color var(--t) var(--ease);
+  }
+
+  .reset-confirm-btn:hover {
+    background: var(--gold-dark);
+    color: var(--white);
+  }
+
+  .reset-cancel-btn {
+    background: transparent;
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 8px 16px;
+    transition: border-color var(--t) var(--ease), color var(--t) var(--ease);
+  }
+
+  .reset-cancel-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .big-button, .pulse-ring {
       animation: none;
@@ -759,6 +817,13 @@
         <div id="adminPanelView" class="admin-panel-view">
           <p>관리자 모드입니다. 오늘 전체 클릭 수를 초기화할 수 있어요.</p>
           <button class="reset-btn" id="resetBtn" type="button">Reset</button>
+          <div id="resetConfirmView" class="reset-confirm-view">
+            <p class="reset-confirm-text">정말 초기화할까요? 되돌릴 수 없어요.</p>
+            <div class="reset-confirm-actions">
+              <button class="reset-confirm-btn" id="resetConfirmBtn" type="button">확인</button>
+              <button class="reset-cancel-btn" id="resetCancelBtn" type="button">취소</button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -803,6 +868,9 @@
     const bigButtonEl = document.getElementById("bigButton");
     const muteBtnEl = document.getElementById("muteBtn");
     const resetBtnEl = document.getElementById("resetBtn");
+    const resetConfirmViewEl = document.getElementById("resetConfirmView");
+    const resetConfirmBtnEl = document.getElementById("resetConfirmBtn");
+    const resetCancelBtnEl = document.getElementById("resetCancelBtn");
     const adminLoginViewEl = document.getElementById("adminLoginView");
     const adminPanelViewEl = document.getElementById("adminPanelView");
     const adminIdEl = document.getElementById("adminId");
@@ -1109,11 +1177,17 @@
       checkMilestones();
     }
 
+    function showResetConfirm() {
+      resetConfirmViewEl.classList.add("show");
+    }
+
+    function hideResetConfirm() {
+      resetConfirmViewEl.classList.remove("show");
+    }
+
     async function resetTodayClicks() {
       if (!supabaseClient) return;
-      const confirmed = window.confirm("오늘 전체 사용자 클릭 수를 0으로 초기화할까요? 되돌릴 수 없어요.");
-      if (!confirmed) return;
-
+      hideResetConfirm();
       gtag("event", "admin_reset_click");
 
       const { data, error } = await supabaseClient.rpc("reset_today_clicks");
@@ -1172,6 +1246,7 @@
 
     function closeInfoPanel() {
       infoOverlayEl.classList.remove("show");
+      hideResetConfirm();
     }
 
     function renderAdminView() {
@@ -1195,7 +1270,9 @@
 
     bigButtonEl.addEventListener("click", handleClick);
     muteBtnEl.addEventListener("click", toggleMute);
-    resetBtnEl.addEventListener("click", resetTodayClicks);
+    resetBtnEl.addEventListener("click", showResetConfirm);
+    resetConfirmBtnEl.addEventListener("click", resetTodayClicks);
+    resetCancelBtnEl.addEventListener("click", hideResetConfirm);
     adminLoginBtnEl.addEventListener("click", attemptAdminLogin);
     adminPwEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter") attemptAdminLogin();
