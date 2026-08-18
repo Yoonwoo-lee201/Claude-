@@ -1114,6 +1114,8 @@
       const confirmed = window.confirm("오늘 전체 사용자 클릭 수를 0으로 초기화할까요? 되돌릴 수 없어요.");
       if (!confirmed) return;
 
+      gtag("event", "admin_reset_click");
+
       const { data, error } = await supabaseClient.rpc("reset_today_clicks");
       if (error) {
         console.error("[Supabase] 초기화 실패:", error.message);
@@ -1184,8 +1186,10 @@
         adminIdEl.value = "";
         adminPwEl.value = "";
         renderAdminView();
+        gtag("event", "admin_login_success");
       } else {
         adminErrorEl.textContent = "아이디 또는 비밀번호가 올바르지 않아요.";
+        gtag("event", "admin_login_failed");
       }
     }
 
