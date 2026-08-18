@@ -692,6 +692,40 @@
     color: var(--gold);
   }
 
+  .reset-success-view {
+    display: none;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .reset-success-view.show {
+    display: block;
+  }
+
+  .reset-success-text {
+    font-size: 13px;
+    color: var(--white);
+    margin: 0 0 10px;
+  }
+
+  .reset-close-btn {
+    background: transparent;
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 8px 16px;
+    transition: border-color var(--t) var(--ease), color var(--t) var(--ease);
+  }
+
+  .reset-close-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .big-button, .pulse-ring {
       animation: none;
@@ -824,6 +858,10 @@
               <button class="reset-cancel-btn" id="resetCancelBtn" type="button">취소</button>
             </div>
           </div>
+          <div id="resetSuccessView" class="reset-success-view">
+            <p class="reset-success-text">✅ 초기화되었습니다.</p>
+            <button class="reset-close-btn" id="resetCloseBtn" type="button">닫기</button>
+          </div>
         </div>
       </section>
     </div>
@@ -871,6 +909,8 @@
     const resetConfirmViewEl = document.getElementById("resetConfirmView");
     const resetConfirmBtnEl = document.getElementById("resetConfirmBtn");
     const resetCancelBtnEl = document.getElementById("resetCancelBtn");
+    const resetSuccessViewEl = document.getElementById("resetSuccessView");
+    const resetCloseBtnEl = document.getElementById("resetCloseBtn");
     const adminLoginViewEl = document.getElementById("adminLoginView");
     const adminPanelViewEl = document.getElementById("adminPanelView");
     const adminIdEl = document.getElementById("adminId");
@@ -1177,23 +1217,37 @@
       checkMilestones();
     }
 
+    let resetSuccessTimer = null;
+
+    function setResetPanelState(name) {
+      resetBtnEl.style.display = name === "idle" ? "" : "none";
+      resetConfirmViewEl.classList.toggle("show", name === "confirm");
+      resetSuccessViewEl.classList.toggle("show", name === "success");
+    }
+
     function showResetConfirm() {
-      resetConfirmViewEl.classList.add("show");
+      setResetPanelState("confirm");
     }
 
     function hideResetConfirm() {
-      resetConfirmViewEl.classList.remove("show");
+      setResetPanelState("idle");
+    }
+
+    function showResetSuccess() {
+      setResetPanelState("success");
+      clearTimeout(resetSuccessTimer);
+      resetSuccessTimer = setTimeout(closeInfoPanel, 3000);
     }
 
     async function resetTodayClicks() {
       if (!supabaseClient) return;
-      hideResetConfirm();
       gtag("event", "admin_reset_click");
 
       const { data, error } = await supabaseClient.rpc("reset_today_clicks");
       if (error) {
         console.error("[Supabase] 초기화 실패:", error.message);
         setScopeNote("초기화에 실패했어요. 연결을 확인해주세요.");
+        setResetPanelState("idle");
         return;
       }
       setScopeNote(DEFAULT_SCOPE_NOTE);
@@ -1201,6 +1255,7 @@
       state.milestonesShown = [];
       savePrefs();
       render();
+      showResetSuccess();
     }
 
     function handleClick(event) {
@@ -1246,7 +1301,8 @@
 
     function closeInfoPanel() {
       infoOverlayEl.classList.remove("show");
-      hideResetConfirm();
+      clearTimeout(resetSuccessTimer);
+      setResetPanelState("idle");
     }
 
     function renderAdminView() {
@@ -1273,6 +1329,7 @@
     resetBtnEl.addEventListener("click", showResetConfirm);
     resetConfirmBtnEl.addEventListener("click", resetTodayClicks);
     resetCancelBtnEl.addEventListener("click", hideResetConfirm);
+    resetCloseBtnEl.addEventListener("click", closeInfoPanel);
     adminLoginBtnEl.addEventListener("click", attemptAdminLogin);
     adminPwEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter") attemptAdminLogin();
